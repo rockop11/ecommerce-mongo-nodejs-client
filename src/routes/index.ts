@@ -7,6 +7,7 @@ export { RegisterPage } from "./auth/registerPage/RegisterPage"
 export { UsersPage } from "./auth/usersPage/UsersPage"
 
 //Products Routes
+export { EditProductsPage } from "./products/EditProductsPage"
 export { ProductsCreatePage } from './products/ProductsCreatePage';
 export { ProductDetailPage } from "./products/ProductDetailPage"
 export { ProductsPage } from './products/ProductsPage';

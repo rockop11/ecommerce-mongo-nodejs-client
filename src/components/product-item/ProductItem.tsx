@@ -64,10 +64,12 @@ export const ProductItem = ({ id, productTitle, imageUrl, deleteProductHandler, 
                 </Box>
 
                 <Box display={'flex'} gap={2}>
-                    <Edit
-                        color={'primary'}
-                        sx={{ cursor: 'pointer' }}
-                    />
+                    <Link to={`/editProduct/${id}`}>
+                        <Edit
+                            color={'primary'}
+                            sx={{ cursor: 'pointer' }}
+                        />
+                    </Link>
 
                     <Delete
                         color='error'

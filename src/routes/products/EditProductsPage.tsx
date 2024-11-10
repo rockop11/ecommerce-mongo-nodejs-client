@@ -1,66 +1,41 @@
-import type { IUser } from '../../interfaces'
-import { ChangeEvent, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useJwt } from 'react-jwt'
-import { useModal } from '../../hooks/useModal'
-import { createProduct } from '../../services'
-import {
-    Autocomplete,
-    Button,
-    Container,
-    Grid,
-    Input,
-    TextField,
-    Typography
-} from '@mui/material'
-import { Modal } from '../../components'
-
-import CheckIcon from "../../assets/CheckIcon.svg"
-import ErrorIcon from "../../assets/ErrorIcon.svg"
+import { ChangeEvent, useEffect, useState } from "react"
+import { useParams, Link } from "react-router-dom"
+import { Autocomplete, Box, Button, Container, Grid, Input, TextField, Typography } from "@mui/material"
+import { Cancel } from "@mui/icons-material"
+import { getProductDetail } from "../../services"
 
 interface InputValuesProps {
     title: string,
-    price: string,
-    discount: string,
-    stock: string,
+    price: number,
+    discount: number,
+    stock: number,
     category: string,
     description: string,
     images: File[],
 }
 
-export const ProductsCreatePage = () => {
+export const EditProductsPage = () => {
 
+    //Hooks and Consts.
     const token = localStorage.getItem('token')
-    const navigate = useNavigate()
-    const { decodedToken } = useJwt<IUser>(token!)
-    const {
-        toggleModal,
-        modalType,
-        title,
-        icon,
-        buttonValue,
-        buttonColor,
-        openModal,
-        closeModal
-    } = useModal();
+    const { id } = useParams()
 
-    const userFullName = decodedToken?.userData.name
-
-    const [errorMessage, setErrorMessage] = useState<string>('')
+    //States
     const [inputValues, setInputValues] = useState<InputValuesProps>({
         title: '',
-        price: '',
-        discount: '',
-        stock: '',
+        price: 0,
+        discount: 0,
+        stock: 0,
         category: '',
         description: '',
         images: [],
     })
+    const [productImages, setProductImages] = useState<string[]>([])
 
+
+    //Handlers
     const setInputValuesHandler = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value, files } = e.target
-
-        setErrorMessage('')
 
         if (name === "images" && files) {
             const imageFiles = Array.from(files);
@@ -77,55 +52,58 @@ export const ProductsCreatePage = () => {
         }
     }
 
-    const createProductHanlder = async () => {
-        const { title, price, discount, stock, category, description, images } = inputValues
-        openModal('loading', "Cargando...")
+    const editProductHandler = () => {
+        console.log(inputValues)
+    }
 
-        if (!title || !price || !discount || !stock || !category || !description || !images.length) {
-            closeModal()
-            setErrorMessage('Debe completar todos los campos*')
-
-            return
-        }
+    const getProductDetailHandler = async () => {
 
         try {
-            await createProduct(token!, inputValues, userFullName!)
+            const { data, urlImages } = await getProductDetail(token!, id!)
+            setProductImages(urlImages)
 
-            openModal('success', 'Producto Creado', CheckIcon, 'Aceptar', 'success')
             setInputValues({
-                title: '',
-                price: '',
-                discount: '',
-                stock: '',
-                category: '',
-                description: '',
-                images: [],
+                title: data.title,
+                price: data.price,
+                discount: data.discount,
+                stock: data.stock,
+                category: data.category,
+                description: data.description,
+                images: []
             })
 
         } catch (err) {
             console.log(err)
-            openModal('error', 'Hubo un Errrrroor', ErrorIcon, 'reintentar', "primary")
         }
+
     }
 
-    return (
-        <Container sx={{ padding: 3, marginTop: 6, overflowY: 'auto', height: "94vh" }}>
-            <Link
-                to="/products"
-                style={{
-                    color: '#1976d2', // Azul más sobrio
-                    fontWeight: 'bold',
-                    textDecoration: 'none',
-                    marginBottom: 2,
-                    display: 'inline-block',
-                    transition: 'color 0.3s ease',
-                }}
-            >
-                Volver a Productos
-            </Link>
-            <Typography variant='h4'>Crear Producto</Typography>
+    useEffect(() => {
+        getProductDetailHandler()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
-            <Grid container justifyContent={'center'} alignItems={'center'} direction={'column'} marginTop={5}>
+    return (
+        <Container sx={{ padding: 3, marginTop: 4, overflowY: 'auto', height: "94vh" }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Link
+                    to="/products"
+                    style={{
+                        color: '#1976d2',
+                        fontWeight: 'bold',
+                        textDecoration: 'none',
+                        marginBottom: 2,
+                        transition: 'color 0.3s ease',
+                        width: 'fit-content'
+                    }}
+                >
+                    Volver a Productos
+                </Link>
+
+                <Typography variant='h4'>Editar Producto</Typography>
+            </Box>
+
+            <Grid container justifyContent={'center'} alignItems={'center'} direction={'column'}>
                 <Grid item sx={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -142,7 +120,7 @@ export const ProductsCreatePage = () => {
                         name='title'
                         value={inputValues.title}
                         onChange={setInputValuesHandler}
-                        error={errorMessage && !inputValues.title ? true : false}
+                    // error={errorMessage && !inputValues.title ? true : false}
                     />
 
                     {/* Inputs de Precio, Stock y Descuento */}
@@ -156,7 +134,7 @@ export const ProductsCreatePage = () => {
                                 name='price'
                                 value={inputValues.price}
                                 onChange={setInputValuesHandler}
-                                error={errorMessage && !inputValues.price ? true : false}
+                            // error={errorMessage && !inputValues.price ? true : false}
                             />
                         </Grid>
                         <Grid item xs={4}>
@@ -168,7 +146,7 @@ export const ProductsCreatePage = () => {
                                 name='discount'
                                 value={inputValues.discount}
                                 onChange={setInputValuesHandler}
-                                error={errorMessage && !inputValues.discount ? true : false}
+                            // error={errorMessage && !inputValues.discount ? true : false}
                             />
                         </Grid>
                         <Grid item xs={4}>
@@ -180,7 +158,7 @@ export const ProductsCreatePage = () => {
                                 name='stock'
                                 value={inputValues.stock}
                                 onChange={setInputValuesHandler}
-                                error={errorMessage && !inputValues.stock ? true : false}
+                            // error={errorMessage && !inputValues.stock ? true : false}
                             />
                         </Grid>
                     </Grid>
@@ -199,7 +177,7 @@ export const ProductsCreatePage = () => {
                                 {...params}
                                 label="Categoria"
                                 name='category'
-                                error={errorMessage && !inputValues.category ? true : false}
+                            // error={errorMessage && !inputValues.category ? true : false}
                             />
                         )}
                     />
@@ -214,7 +192,7 @@ export const ProductsCreatePage = () => {
                         name='description'
                         value={inputValues.description}
                         onChange={setInputValuesHandler}
-                        error={errorMessage && !inputValues.description ? true : false}
+                    // error={errorMessage && !inputValues.description ? true : false}
                     />
 
                     {/* Input de Imágenes */}
@@ -225,40 +203,36 @@ export const ProductsCreatePage = () => {
                             name='images'
                             inputProps={{ multiple: true }}
                             onChange={setInputValuesHandler}
-                            error={errorMessage && !inputValues.images.length ? true : false}
+                        // error={errorMessage && !inputValues.images.length ? true : false}
                         />
-                        {/* {errorMessage && !inputValues.images.length && (
-                            <Typography align="center" color={'error'}>Por favor, selecciona una imagen.</Typography>
-                        )} */}
+
+                        <Box sx={{
+                            display: 'flex', gap: 4, justifyContent: 'center', flexWrap: 'wrap', marginTop: 2,
+                        }}>
+                            {productImages.map((image, i) => (
+                                <Box key={i} sx={{ position: 'relative' }}>
+                                    <Cancel color={'error'} onClick={() => console.log('eliminar imagen')} sx={{ position: 'absolute', right: 0, cursor: 'pointer' }} />
+                                    <img
+                                        src={image}
+                                        style={{
+                                            width: '120px',
+                                            height: '120px'
+                                        }}
+                                    />
+                                </Box>
+                            ))}
+                        </Box>
+
                     </Grid>
 
-                    {/* Mensaje de Error */}
-                    {errorMessage && (<Typography align="center" color={'error'}>{errorMessage}</Typography>)}
-
-                    {/* Botón para Crear Producto */}
                     <Button
                         variant='contained'
-                        onClick={createProductHanlder}
+                        onClick={editProductHandler}
                     >
-                        Crear Producto
+                        Editar Producto
                     </Button>
                 </Grid>
             </Grid>
-
-            {/* Modal para confirmación o información adicional */}
-            {toggleModal && (
-                <Modal
-                    type={modalType}
-                    open={toggleModal}
-                    title={title}
-                    icon={icon}
-                    buttonValue={buttonValue}
-                    buttonColor={buttonColor}
-                    actionButtonHandler={() => navigate('/products')}
-                    closeModalHandler={() => closeModal()}
-                />
-            )}
         </Container>
-
     )
 }
