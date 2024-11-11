@@ -1,8 +1,11 @@
 import { ChangeEvent, useEffect, useState } from "react"
+import { useModal } from "../../hooks/useModal"
 import { useParams, Link } from "react-router-dom"
 import { Autocomplete, Box, Button, Container, Grid, Input, TextField, Typography } from "@mui/material"
 import { Cancel } from "@mui/icons-material"
-import { getProductDetail } from "../../services"
+import { getProductDetail, deleteProductImage } from "../../services"
+import { Modal } from "../../components"
+import WarningIcon from "../../assets/WarnignIcon.png"
 
 interface InputValuesProps {
     title: string,
@@ -19,6 +22,7 @@ export const EditProductsPage = () => {
     //Hooks and Consts.
     const token = localStorage.getItem('token')
     const { id } = useParams()
+    const { toggleModal, modalType, title, icon, buttonValue, buttonColor, openModal, closeModal } = useModal()
 
     //States
     const [inputValues, setInputValues] = useState<InputValuesProps>({
@@ -31,6 +35,7 @@ export const EditProductsPage = () => {
         images: [],
     })
     const [productImages, setProductImages] = useState<string[]>([])
+    const [selectedImage, setSelectedImage] = useState<string>('')
 
 
     //Handlers
@@ -52,16 +57,38 @@ export const EditProductsPage = () => {
         }
     }
 
+    const openModalHandler = (image: string) => {
+        openModal('success', 'Desea Eliminar la imagen?', WarningIcon, 'Eliminar', 'error')
+        setSelectedImage(image)
+    }
+
+    const deleteProductImageHandler = async (imageUrl: string) => {
+        const [mainUrl] = imageUrl.split('?');
+
+        const parts = mainUrl.split('o/');
+
+        const pathSegments = parts[1].split('%2F');
+
+        const folder = decodeURIComponent(pathSegments[1]);
+        const productName = decodeURIComponent(pathSegments[2]);
+
+        try {
+            await deleteProductImage(token!, id!, folder, productName)
+            await getProductDetailHandler()
+            closeModal()
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     const editProductHandler = () => {
         console.log(inputValues)
     }
 
     const getProductDetailHandler = async () => {
-
         try {
             const { data, urlImages } = await getProductDetail(token!, id!)
             setProductImages(urlImages)
-
             setInputValues({
                 title: data.title,
                 price: data.price,
@@ -71,7 +98,6 @@ export const EditProductsPage = () => {
                 description: data.description,
                 images: []
             })
-
         } catch (err) {
             console.log(err)
         }
@@ -211,7 +237,11 @@ export const EditProductsPage = () => {
                         }}>
                             {productImages.map((image, i) => (
                                 <Box key={i} sx={{ position: 'relative' }}>
-                                    <Cancel color={'error'} onClick={() => console.log('eliminar imagen')} sx={{ position: 'absolute', right: 0, cursor: 'pointer' }} />
+                                    <Cancel
+                                        color={'error'}
+                                        sx={{ position: 'absolute', right: 0, cursor: 'pointer' }}
+                                        onClick={() => openModalHandler(image)}
+                                    />
                                     <img
                                         src={image}
                                         style={{
@@ -233,6 +263,19 @@ export const EditProductsPage = () => {
                     </Button>
                 </Grid>
             </Grid>
+
+            {toggleModal && (
+                <Modal
+                    open={toggleModal}
+                    type={modalType}
+                    title={title}
+                    icon={icon}
+                    buttonValue={buttonValue}
+                    buttonColor={buttonColor}
+                    actionButtonHandler={() => deleteProductImageHandler(selectedImage)}
+                    closeModalHandler={closeModal}
+                />
+            )}
         </Container>
     )
 }
