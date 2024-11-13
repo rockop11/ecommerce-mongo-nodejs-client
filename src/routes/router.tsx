@@ -8,7 +8,8 @@ import {
     ProfilePage,
     RegisterPage,
     EditUserPage,
-    UsersPage
+    UsersPage,
+    EditProductsPage
 } from "./index"
 import { Layout } from "./Layout";
 
@@ -28,6 +29,10 @@ export const router = createBrowserRouter([
             {
                 path: 'product/:id',
                 element: <ProductDetailPage />
+            },
+            {
+                path: 'editProduct/:id',
+                element: <EditProductsPage />
             },
             {
                 path: '/products/create',
