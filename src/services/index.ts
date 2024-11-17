@@ -12,6 +12,7 @@ export { register } from "./auth/register"
 export { createProduct } from "./products/createProduct"
 export { deleteProduct } from "./products/deleteProduct"
 export { deleteProductImage } from "./products/deleteProductImage"
+export { editProduct } from "../services/products/editProduct"
 export { getLastProduct } from "./products/getLastProduct"
 export { getProductDetail } from "./products/getProductDetail"
 export { getProductsList } from './products/getProductsList';
