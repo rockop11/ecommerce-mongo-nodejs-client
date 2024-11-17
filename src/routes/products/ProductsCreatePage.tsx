@@ -1,22 +1,20 @@
 import type { IUser } from '../../interfaces'
-import { ChangeEvent, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { ChangeEvent, FormEvent, useState } from 'react'
 import { useJwt } from 'react-jwt'
-import { useModal } from '../../hooks/useModal'
+import { Link, useNavigate } from 'react-router-dom'
 import { createProduct } from '../../services'
 import {
+    Alert,
+    AlertTitle,
     Autocomplete,
     Button,
     Container,
     Grid,
     Input,
+    Snackbar,
     TextField,
-    Typography
+    Typography,
 } from '@mui/material'
-import { Modal } from '../../components'
-
-import CheckIcon from "../../assets/CheckIcon.svg"
-import ErrorIcon from "../../assets/ErrorIcon.svg"
 
 interface InputValuesProps {
     title: string,
@@ -30,22 +28,19 @@ interface InputValuesProps {
 
 export const ProductsCreatePage = () => {
 
+    //Hooks & consts
     const token = localStorage.getItem('token')
     const navigate = useNavigate()
     const { decodedToken } = useJwt<IUser>(token!)
-    const {
-        toggleModal,
-        modalType,
-        title,
-        icon,
-        buttonValue,
-        buttonColor,
-        openModal,
-        closeModal
-    } = useModal();
-
     const userFullName = decodedToken?.userData.name
+    const time: number = 3000
 
+    //States
+    const [openSnackbar, setOpenSnackbar] = useState<boolean>(false)
+    const [snackbarTitle, setSnackbarTitle] = useState<string>('')
+    const [snackbarSubtitle, setSnackbarSubtitle] = useState<string>('')
+    const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'info'>('info')
+    const [disabledButton, setDisabledButton] = useState<boolean>(false)
     const [errorMessage, setErrorMessage] = useState<string>('')
     const [inputValues, setInputValues] = useState<InputValuesProps>({
         title: '',
@@ -57,6 +52,7 @@ export const ProductsCreatePage = () => {
         images: [],
     })
 
+    //Handlers
     const setInputValuesHandler = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value, files } = e.target
 
@@ -77,21 +73,24 @@ export const ProductsCreatePage = () => {
         }
     }
 
-    const createProductHanlder = async () => {
+    const createProductHanlder = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+
         const { title, price, discount, stock, category, description, images } = inputValues
-        openModal('loading', "Cargando...")
 
         if (!title || !price || !discount || !stock || !category || !description || !images.length) {
-            closeModal()
             setErrorMessage('Debe completar todos los campos*')
 
             return
         }
 
         try {
+            setDisabledButton(true)
+            setOpenSnackbar(true)
+            setSnackbarTitle('Creando Producto...')
+
             await createProduct(token!, inputValues, userFullName!)
 
-            openModal('success', 'Producto Creado', CheckIcon, 'Aceptar', 'success')
             setInputValues({
                 title: '',
                 price: '',
@@ -101,10 +100,21 @@ export const ProductsCreatePage = () => {
                 description: '',
                 images: [],
             })
+            setOpenSnackbar(true)
+            setSnackbarTitle('Producto creado')
+            setSnackbarSubtitle('Redirigiendo a Productos')
+            setSnackbarSeverity('success')
 
+            setTimeout(() => {
+                navigate('/products')
+            }, time)
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
-            console.log(err)
-            openModal('error', 'Hubo un Errrrroor', ErrorIcon, 'reintentar', "primary")
+            setOpenSnackbar(true)
+            setSnackbarTitle('No se pudo crear el producto')
+            setSnackbarSubtitle('No se pudo crear el producto')
+            setSnackbarSeverity('error')
+            setDisabledButton(false)
         }
     }
 
@@ -113,7 +123,7 @@ export const ProductsCreatePage = () => {
             <Link
                 to="/products"
                 style={{
-                    color: '#1976d2', // Azul más sobrio
+                    color: '#1976d2',
                     fontWeight: 'bold',
                     textDecoration: 'none',
                     marginBottom: 2,
@@ -126,139 +136,137 @@ export const ProductsCreatePage = () => {
             <Typography variant='h4'>Crear Producto</Typography>
 
             <Grid container justifyContent={'center'} alignItems={'center'} direction={'column'} marginTop={5}>
-                <Grid item sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    padding: 4,
-                    gap: 4,
-                    width: '430px'
-                }}>
-                    {/* Input de Título */}
-                    <TextField
-                        type='text'
-                        placeholder='titulo'
-                        label='Titulo'
-                        size='small'
-                        name='title'
-                        value={inputValues.title}
-                        onChange={setInputValuesHandler}
-                        error={errorMessage && !inputValues.title ? true : false}
-                    />
-
-                    {/* Inputs de Precio, Stock y Descuento */}
-                    <Grid container spacing={2}>
-                        <Grid item xs={4}>
-                            <TextField
-                                type='text'
-                                placeholder='Precio'
-                                label='Precio'
-                                size='small'
-                                name='price'
-                                value={inputValues.price}
-                                onChange={setInputValuesHandler}
-                                error={errorMessage && !inputValues.price ? true : false}
-                            />
-                        </Grid>
-                        <Grid item xs={4}>
-                            <TextField
-                                type='text'
-                                placeholder='Descuento'
-                                label='Descuento'
-                                size='small'
-                                name='discount'
-                                value={inputValues.discount}
-                                onChange={setInputValuesHandler}
-                                error={errorMessage && !inputValues.discount ? true : false}
-                            />
-                        </Grid>
-                        <Grid item xs={4}>
-                            <TextField
-                                type='text'
-                                placeholder='Stock'
-                                label='Stock'
-                                size='small'
-                                name='stock'
-                                value={inputValues.stock}
-                                onChange={setInputValuesHandler}
-                                error={errorMessage && !inputValues.stock ? true : false}
-                            />
-                        </Grid>
-                    </Grid>
-
-                    {/* Input de Categoría */}
-                    <Autocomplete
-                        options={['Electrodomestico', 'Hogar', 'Jardin']}
-                        size='small'
-                        value={inputValues.category || null}
-                        onChange={(_event, newValue) => setInputValues((prevValues) => ({
-                            ...prevValues,
-                            category: newValue || '',
-                        }))}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Categoria"
-                                name='category'
-                                error={errorMessage && !inputValues.category ? true : false}
-                            />
-                        )}
-                    />
-
-                    {/* Input de Descripción */}
-                    <TextField
-                        type='text'
-                        placeholder='Descripcion'
-                        label='Descripcion'
-                        multiline
-                        maxRows={4}
-                        name='description'
-                        value={inputValues.description}
-                        onChange={setInputValuesHandler}
-                        error={errorMessage && !inputValues.description ? true : false}
-                    />
-
-                    {/* Input de Imágenes */}
-                    <Grid>
-                        <Input
-                            type='file'
+                <form onSubmit={createProductHanlder}>
+                    <Grid item sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        padding: 4,
+                        gap: 4,
+                        width: '430px',
+                    }}>
+                        {/* Input de Título */}
+                        <TextField
+                            type='text'
+                            placeholder='titulo'
+                            label='Titulo'
                             size='small'
-                            name='images'
-                            inputProps={{ multiple: true }}
+                            name='title'
+                            value={inputValues.title}
                             onChange={setInputValuesHandler}
-                            error={errorMessage && !inputValues.images.length ? true : false}
+                            error={errorMessage && !inputValues.title ? true : false}
                         />
-                        {/* {errorMessage && !inputValues.images.length && (
-                            <Typography align="center" color={'error'}>Por favor, selecciona una imagen.</Typography>
-                        )} */}
+
+                        {/* Inputs de Precio, Stock y Descuento */}
+                        <Grid container spacing={2}>
+                            <Grid item xs={4}>
+                                <TextField
+                                    type='text'
+                                    placeholder='Precio'
+                                    label='Precio'
+                                    size='small'
+                                    name='price'
+                                    value={inputValues.price}
+                                    onChange={setInputValuesHandler}
+                                    error={errorMessage && !inputValues.price ? true : false}
+                                />
+                            </Grid>
+                            <Grid item xs={4}>
+                                <TextField
+                                    type='text'
+                                    placeholder='Descuento'
+                                    label='Descuento'
+                                    size='small'
+                                    name='discount'
+                                    value={inputValues.discount}
+                                    onChange={setInputValuesHandler}
+                                    error={errorMessage && !inputValues.discount ? true : false}
+                                />
+                            </Grid>
+                            <Grid item xs={4}>
+                                <TextField
+                                    type='text'
+                                    placeholder='Stock'
+                                    label='Stock'
+                                    size='small'
+                                    name='stock'
+                                    value={inputValues.stock}
+                                    onChange={setInputValuesHandler}
+                                    error={errorMessage && !inputValues.stock ? true : false}
+                                />
+                            </Grid>
+                        </Grid>
+
+                        {/* Input de Categoría */}
+                        <Autocomplete
+                            options={['Electrodomestico', 'Hogar', 'Jardin']}
+                            size='small'
+                            value={inputValues.category || null}
+                            onChange={(_event, newValue) => setInputValues((prevValues) => ({
+                                ...prevValues,
+                                category: newValue || '',
+                            }))}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Categoria"
+                                    name='category'
+                                    error={errorMessage && !inputValues.category ? true : false}
+                                />
+                            )}
+                        />
+
+                        {/* Input de Descripción */}
+                        <TextField
+                            type='text'
+                            placeholder='Descripcion'
+                            label='Descripcion'
+                            multiline
+                            maxRows={4}
+                            name='description'
+                            value={inputValues.description}
+                            onChange={setInputValuesHandler}
+                            error={errorMessage && !inputValues.description ? true : false}
+                        />
+
+                        {/* Input de Imágenes */}
+                        <Grid>
+                            <Input
+                                type='file'
+                                size='small'
+                                name='images'
+                                inputProps={{ multiple: true }}
+                                onChange={setInputValuesHandler}
+                                error={errorMessage && !inputValues.images.length ? true : false}
+                            />
+                        </Grid>
+
+                        {/* Mensaje de Error */}
+                        {errorMessage && (<Typography align="center" color={'error'}>{errorMessage}</Typography>)}
+
+                        <Button
+                            variant='contained'
+                            type='submit'
+                            disabled={disabledButton}
+                        >
+                            Crear Producto
+                        </Button>
                     </Grid>
-
-                    {/* Mensaje de Error */}
-                    {errorMessage && (<Typography align="center" color={'error'}>{errorMessage}</Typography>)}
-
-                    {/* Botón para Crear Producto */}
-                    <Button
-                        variant='contained'
-                        onClick={createProductHanlder}
-                    >
-                        Crear Producto
-                    </Button>
-                </Grid>
+                </form>
             </Grid>
 
-            {/* Modal para confirmación o información adicional */}
-            {toggleModal && (
-                <Modal
-                    type={modalType}
-                    open={toggleModal}
-                    title={title}
-                    icon={icon}
-                    buttonValue={buttonValue}
-                    buttonColor={buttonColor}
-                    actionButtonHandler={() => navigate('/products')}
-                    closeModalHandler={() => closeModal()}
-                />
+            {openSnackbar && (
+                <Snackbar
+                    open={true}
+                    autoHideDuration={time}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    onClose={() => setOpenSnackbar(false)}
+                >
+                    <Alert severity={snackbarSeverity} variant='filled' onClose={() => setOpenSnackbar(false)}>
+                        <AlertTitle>{snackbarTitle}</AlertTitle>
+                        <Typography variant='body2'>{snackbarSubtitle}</Typography>
+                    </Alert>
+                </Snackbar>
             )}
         </Container>
-
     )
 }
