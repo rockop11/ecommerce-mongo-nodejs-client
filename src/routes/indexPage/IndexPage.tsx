@@ -40,16 +40,22 @@ export const IndexPage = () => {
 	})
 
 	const getIndexData = async () => {
-		const { data: lastProduct } = await getLastProduct(token!)
-		const { data: lastUser } = await getLastUserCreated(token!)
-		const { length: productListLength } = await getProductsList(token!)
-		const { length: usersListLength } = await getAllUsers(token!)
+		try {
+			const { data: lastProduct } = await getLastProduct(token!)
+			const { data: lastUser } = await getLastUserCreated(token!)
+			const { length: productListLength } = await getProductsList(token!)
+			const { length: usersListLength } = await getAllUsers(token!)
 
-		setLastProductData(lastProduct)
-		setLastUserData(lastUser)
-		setProductListLength(productListLength)
-		setUsersListLength(usersListLength)
-		setLoader(false)
+			setLastProductData(lastProduct)
+			setLastUserData(lastUser)
+			setProductListLength(productListLength)
+			setUsersListLength(usersListLength)
+			setLoader(false)
+		} catch (err) {
+			console.log(err)
+			setLoader(false)
+		}
+
 	}
 
 	useEffect(() => {

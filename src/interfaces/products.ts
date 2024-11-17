@@ -9,5 +9,6 @@ export interface IProduct {
     title: string
     description: string
     _id: string
-    createdBy: string
+    createdBy: string,
+    updatedAt?: Date
 }

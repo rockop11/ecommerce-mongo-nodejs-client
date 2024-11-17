@@ -1,17 +1,17 @@
-import { ChangeEvent, useEffect, useState } from "react"
+import { ChangeEvent, FormEvent, useEffect, useState } from "react"
 import { useModal } from "../../hooks/useModal"
 import { useParams, Link } from "react-router-dom"
 import { Autocomplete, Box, Button, Container, Grid, Input, TextField, Typography } from "@mui/material"
 import { Cancel } from "@mui/icons-material"
-import { getProductDetail, deleteProductImage } from "../../services"
+import { getProductDetail, deleteProductImage, editProduct } from "../../services"
 import { Modal } from "../../components"
 import WarningIcon from "../../assets/WarnignIcon.png"
 
 interface InputValuesProps {
     title: string,
-    price: number,
-    discount: number,
-    stock: number,
+    price: string,
+    discount: string,
+    stock: string,
     category: string,
     description: string,
     images: File[],
@@ -27,16 +27,15 @@ export const EditProductsPage = () => {
     //States
     const [inputValues, setInputValues] = useState<InputValuesProps>({
         title: '',
-        price: 0,
-        discount: 0,
-        stock: 0,
+        price: '',
+        discount: '',
+        stock: '',
         category: '',
         description: '',
         images: [],
     })
     const [productImages, setProductImages] = useState<string[]>([])
     const [selectedImage, setSelectedImage] = useState<string>('')
-
 
     //Handlers
     const setInputValuesHandler = (e: ChangeEvent<HTMLInputElement>) => {
@@ -73,27 +72,41 @@ export const EditProductsPage = () => {
         const productName = decodeURIComponent(pathSegments[2]);
 
         try {
+
+            const removedImageFromArray = productImages.filter(image => {
+                return image !== imageUrl
+            })
+
+            setProductImages(removedImageFromArray)
             await deleteProductImage(token!, id!, folder, productName)
-            await getProductDetailHandler()
             closeModal()
         } catch (error) {
             console.log(error)
         }
     }
 
-    const editProductHandler = () => {
-        console.log(inputValues)
+    const editProductHandler = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        openModal('loading', 'Editando producto')
+
+        try {
+            await editProduct(token!, id!, inputValues)
+            closeModal()
+        } catch (err) {
+            console.log(err)
+        }
     }
 
     const getProductDetailHandler = async () => {
         try {
             const { data, urlImages } = await getProductDetail(token!, id!)
             setProductImages(urlImages)
+
             setInputValues({
                 title: data.title,
-                price: data.price,
-                discount: data.discount,
-                stock: data.stock,
+                price: data.price.toString(),
+                discount: data.discount.toString(),
+                stock: data.stock.toString(),
                 category: data.category,
                 description: data.description,
                 images: []
@@ -101,7 +114,6 @@ export const EditProductsPage = () => {
         } catch (err) {
             console.log(err)
         }
-
     }
 
     useEffect(() => {
@@ -130,138 +142,131 @@ export const EditProductsPage = () => {
             </Box>
 
             <Grid container justifyContent={'center'} alignItems={'center'} direction={'column'}>
-                <Grid item sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    padding: 4,
-                    gap: 4,
-                    width: '430px'
-                }}>
-                    {/* Input de Título */}
-                    <TextField
-                        type='text'
-                        placeholder='titulo'
-                        label='Titulo'
-                        size='small'
-                        name='title'
-                        value={inputValues.title}
-                        onChange={setInputValuesHandler}
-                    // error={errorMessage && !inputValues.title ? true : false}
-                    />
+                <form onSubmit={editProductHandler}>
+                    <Grid item sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        padding: 4,
+                        gap: 4,
+                        width: '430px'
+                    }}>
 
-                    {/* Inputs de Precio, Stock y Descuento */}
-                    <Grid container spacing={2}>
-                        <Grid item xs={4}>
-                            <TextField
-                                type='text'
-                                placeholder='Precio'
-                                label='Precio'
-                                size='small'
-                                name='price'
-                                value={inputValues.price}
-                                onChange={setInputValuesHandler}
-                            // error={errorMessage && !inputValues.price ? true : false}
-                            />
-                        </Grid>
-                        <Grid item xs={4}>
-                            <TextField
-                                type='text'
-                                placeholder='Descuento'
-                                label='Descuento'
-                                size='small'
-                                name='discount'
-                                value={inputValues.discount}
-                                onChange={setInputValuesHandler}
-                            // error={errorMessage && !inputValues.discount ? true : false}
-                            />
-                        </Grid>
-                        <Grid item xs={4}>
-                            <TextField
-                                type='text'
-                                placeholder='Stock'
-                                label='Stock'
-                                size='small'
-                                name='stock'
-                                value={inputValues.stock}
-                                onChange={setInputValuesHandler}
-                            // error={errorMessage && !inputValues.stock ? true : false}
-                            />
-                        </Grid>
-                    </Grid>
-
-                    {/* Input de Categoría */}
-                    <Autocomplete
-                        options={['Electrodomestico', 'Hogar', 'Jardin']}
-                        size='small'
-                        value={inputValues.category || null}
-                        onChange={(_event, newValue) => setInputValues((prevValues) => ({
-                            ...prevValues,
-                            category: newValue || '',
-                        }))}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Categoria"
-                                name='category'
-                            // error={errorMessage && !inputValues.category ? true : false}
-                            />
-                        )}
-                    />
-
-                    {/* Input de Descripción */}
-                    <TextField
-                        type='text'
-                        placeholder='Descripcion'
-                        label='Descripcion'
-                        multiline
-                        maxRows={4}
-                        name='description'
-                        value={inputValues.description}
-                        onChange={setInputValuesHandler}
-                    // error={errorMessage && !inputValues.description ? true : false}
-                    />
-
-                    {/* Input de Imágenes */}
-                    <Grid>
-                        <Input
-                            type='file'
+                        {/* Input de Título */}
+                        <TextField
+                            type='text'
+                            placeholder='titulo'
+                            label='Titulo'
                             size='small'
-                            name='images'
-                            inputProps={{ multiple: true }}
+                            name='title'
+                            value={inputValues.title}
                             onChange={setInputValuesHandler}
-                        // error={errorMessage && !inputValues.images.length ? true : false}
                         />
 
-                        <Box sx={{
-                            display: 'flex', gap: 4, justifyContent: 'center', flexWrap: 'wrap', marginTop: 2,
-                        }}>
-                            {productImages.map((image, i) => (
-                                <Box key={i} sx={{ position: 'relative' }}>
-                                    <Cancel
-                                        color={'error'}
-                                        sx={{ position: 'absolute', right: 0, cursor: 'pointer' }}
-                                        onClick={() => openModalHandler(image)}
-                                    />
-                                    <img
-                                        src={image}
-                                        style={{
-                                            width: '120px',
-                                            height: '120px'
-                                        }}
-                                    />
-                                </Box>
-                            ))}
-                        </Box>
+                        {/* Inputs de Precio, Stock y Descuento */}
+                        <Grid container spacing={2}>
+                            <Grid item xs={4}>
+                                <TextField
+                                    type='text'
+                                    placeholder='Precio'
+                                    label='Precio'
+                                    size='small'
+                                    name='price'
+                                    value={inputValues.price}
+                                    onChange={setInputValuesHandler}
+                                />
+                            </Grid>
+                            <Grid item xs={4}>
+                                <TextField
+                                    type='text'
+                                    placeholder='Descuento'
+                                    label='Descuento'
+                                    size='small'
+                                    name='discount'
+                                    value={inputValues.discount}
+                                    onChange={setInputValuesHandler}
+                                />
+                            </Grid>
+                            <Grid item xs={4}>
+                                <TextField
+                                    type='text'
+                                    placeholder='Stock'
+                                    label='Stock'
+                                    size='small'
+                                    name='stock'
+                                    value={inputValues.stock}
+                                    onChange={setInputValuesHandler}
+                                />
+                            </Grid>
+                        </Grid>
 
+                        {/* Input de Categoría */}
+                        <Autocomplete
+                            options={['Electrodomestico', 'Hogar', 'Jardin']}
+                            size='small'
+                            value={inputValues.category || null}
+                            onChange={(_event, newValue) => setInputValues((prevValues) => ({
+                                ...prevValues,
+                                category: newValue || '',
+                            }))}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Categoria"
+                                    name='category'
+                                />
+                            )}
+                        />
+
+                        {/* Input de Descripción */}
+                        <TextField
+                            type='text'
+                            placeholder='Descripcion'
+                            label='Descripcion'
+                            multiline
+                            maxRows={4}
+                            name='description'
+                            value={inputValues.description}
+                            onChange={setInputValuesHandler}
+                        />
+
+                        {/* Input de Imágenes */}
+                        <Grid>
+                            <Input
+                                type='file'
+                                size='small'
+                                name='images'
+                                inputProps={{ multiple: true }}
+                                onChange={setInputValuesHandler}
+                            />
+
+                            <Box sx={{
+                                display: 'flex', gap: 4, justifyContent: 'center', flexWrap: 'wrap', marginTop: 2,
+                            }}>
+                                {productImages.map((image, i) => (
+                                    <Box key={i} sx={{ position: 'relative' }}>
+                                        <Cancel
+                                            color={'error'}
+                                            sx={{ position: 'absolute', right: 0, cursor: 'pointer' }}
+                                            onClick={() => openModalHandler(image)}
+                                        />
+                                        <img
+                                            src={image}
+                                            style={{
+                                                width: '120px',
+                                                height: '120px'
+                                            }}
+                                        />
+                                    </Box>
+                                ))}
+                            </Box>
+
+                        </Grid>
+
+                        <Button variant='contained' type='submit'>
+                            Editar Producto
+                        </Button>
                     </Grid>
-
-                    <Button
-                        variant='contained'
-                        onClick={editProductHandler}
-                    >
-                        Editar Producto
-                    </Button>
-                </Grid>
+                </form>
             </Grid>
 
             {toggleModal && (
