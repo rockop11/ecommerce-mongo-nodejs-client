@@ -3,12 +3,9 @@ import { ChangeEvent, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useJwt } from "react-jwt"
 import { useModal } from "../../../hooks/useModal"
-import { Container, Typography, TextField, Grid, Input, Button } from "@mui/material"
+import { Button, Container, Grid, Input, Snackbar, Typography, TextField, Alert, AlertTitle } from "@mui/material"
 import { Modal } from "../../../components"
 import { editUser, logout } from "../../../services"
-
-import CheckIcon from "../../../assets/CheckIcon.svg"
-import ErrorIcon from "../../../assets/ErrorIcon.svg"
 
 interface InputValuesProps {
     name: string,
@@ -20,10 +17,16 @@ interface InputValuesProps {
 export const EditUserPage = () => {
 
     const token = localStorage.getItem('token')
+    const time: number = 3000
     const { decodedToken } = useJwt<IUser>(token!)
     const { toggleModal, modalType, title, icon, buttonValue, buttonColor, openModal, closeModal } = useModal()
     const navigate = useNavigate()
 
+    const [disabledButton, setDisabledButton] = useState<boolean>(false)
+    const [openSnackbar, setOpenSnackbar] = useState<boolean>(false)
+    const [snackbarTitle, setSnackbarTitle] = useState<string>('')
+    const [snackbarSubtitle, setSnackbarSubtitle] = useState<string>('')
+    const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'info'>('info')
     const [inputValues, setInputValues] = useState<InputValuesProps>({
         name: '',
         username: '',
@@ -52,18 +55,28 @@ export const EditUserPage = () => {
     const editUserHandler = async () => {
         try {
             openModal('loading', 'Cargando...')
+            setDisabledButton(true)
+
             await editUser(decodedToken?.userData._id as string, inputValues, token!)
-            openModal('success', 'Usuario Editado', CheckIcon, "Ir al Login", "primary")
+            setOpenSnackbar(true)
+            setSnackbarTitle('Usuario Editado')
+            setSnackbarSubtitle('Redirigiendo a Login...')
+            setSnackbarSeverity('success')
+            closeModal()
+
+            setTimeout(() => {
+                logout()
+                navigate('/login')
+            }, time)
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
-            openModal('error', 'Error al editar Usuario', ErrorIcon)
+            setOpenSnackbar(true)
+            setSnackbarTitle('No se pudo editar el usuario')
+            setSnackbarSubtitle('intente nuevamente')
+            setSnackbarSeverity('error')
+            closeModal()
         }
-    }
-
-    const actionButtonHandler = () => {
-        logout()
-        navigate('/login')
     }
 
     useEffect(() => {
@@ -128,26 +141,36 @@ export const EditUserPage = () => {
                         onChange={inputValuesHandler}
                     />
 
-                    <Button variant="contained" onClick={editUserHandler}>
+                    <Button variant="contained" onClick={editUserHandler} disabled={disabledButton}>
                         Editar Usuario
                     </Button>
                 </Grid>
             </Grid>
 
-            {
-                toggleModal && (
-                    <Modal
-                        type={modalType}
-                        open={toggleModal}
-                        title={title}
-                        icon={icon}
-                        buttonValue={buttonValue}
-                        buttonColor={buttonColor}
-                        actionButtonHandler={actionButtonHandler}
-                        closeModalHandler={closeModal}
-                    />
-                )
-            }
+            {openSnackbar && (
+                <Snackbar
+                    open={true}
+                    autoHideDuration={time}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    onClose={() => setOpenSnackbar(false)}
+                >
+                    <Alert severity={snackbarSeverity} variant='filled'>
+                        <AlertTitle>{snackbarTitle}</AlertTitle>
+                        <Typography variant='body2'>{snackbarSubtitle}</Typography>
+                    </Alert>
+                </Snackbar>
+            )}
+
+            {toggleModal && (
+                <Modal
+                    type={modalType}
+                    open={toggleModal}
+                    title={title}
+                    icon={icon}
+                    buttonValue={buttonValue}
+                    buttonColor={buttonColor}
+                />
+            )}
         </Container>
     )
 }

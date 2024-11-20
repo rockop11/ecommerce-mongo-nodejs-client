@@ -14,8 +14,8 @@ interface ModalProps {
     icon: string
     buttonValue?: string
     buttonColor?: 'success' | 'error' | 'primary' | 'secondary'
-    actionButtonHandler: () => void
-    closeModalHandler: () => void
+    actionButtonHandler?: () => void
+    closeModalHandler?: () => void
 }
 
 export const Modal = ({
@@ -26,8 +26,8 @@ export const Modal = ({
     buttonValue,
     buttonColor,
     actionButtonHandler,
-    closeModalHandler }: ModalProps
-) => {
+    closeModalHandler
+}: ModalProps) => {
     return (
         <Dialog open={open} PaperProps={{
             sx: {

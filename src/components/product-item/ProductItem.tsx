@@ -1,9 +1,10 @@
 import { useModal } from '../../hooks/useModal';
 import { Link } from 'react-router-dom';
 import { Modal } from '../modal/Modal';
-import { Box, Typography, useTheme } from '@mui/material';
+import { Alert, AlertTitle, Box, Snackbar, Typography, useTheme } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
 import WarningIcon from "../../assets/WarnignIcon.png"
+import { useState } from 'react';
 
 interface ProductItemProps {
     id: string
@@ -16,6 +17,7 @@ interface ProductItemProps {
 export const ProductItem = ({ id, productTitle, imageUrl, deleteProductHandler, getProductsListHandler }: ProductItemProps) => {
 
     const theme = useTheme()
+    const time: number = 3000
     const {
         toggleModal,
         modalType,
@@ -27,14 +29,26 @@ export const ProductItem = ({ id, productTitle, imageUrl, deleteProductHandler, 
         closeModal
     } = useModal()
 
+    const [openSnackbar, setOpenSnackbar] = useState<boolean>(false)
+    const [snackbarTitle, setSnackbarTitle] = useState<string>('')
+    const [snackbarSubtitle, setSnackbarSubtitle] = useState<string>('')
+    const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'info'>('info')
+
     const deleteProduct = async () => {
         try {
             openModal('loading', 'Eliminando producto...')
             await deleteProductHandler()
+            setOpenSnackbar(true)
+            setSnackbarTitle('Producto eliminado')
+            setSnackbarSeverity('success')
             await getProductsListHandler()
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
-            openModal('info', 'No se pudo eliminar el producto', WarningIcon, 'Aceptar', 'primary')
+            setOpenSnackbar(true)
+            setSnackbarTitle('No se pudo eliminar el producto')
+            setSnackbarSubtitle('intente de nuevo')
+            setSnackbarSeverity('error')
+            // openModal('info', 'No se pudo eliminar el producto', WarningIcon, 'Aceptar', 'primary')
         }
     }
 
@@ -84,6 +98,20 @@ export const ProductItem = ({ id, productTitle, imageUrl, deleteProductHandler, 
                     />
                 </Box>
             </Box>
+
+            {openSnackbar && (
+                <Snackbar
+                    open={true}
+                    autoHideDuration={time}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    onClose={() => setOpenSnackbar(false)}
+                >
+                    <Alert severity={snackbarSeverity} variant='filled'>
+                        <AlertTitle>{snackbarTitle}</AlertTitle>
+                        <Typography variant='body2'>{snackbarSubtitle}</Typography>
+                    </Alert>
+                </Snackbar>
+            )}
 
             {toggleModal && (
                 <Modal
