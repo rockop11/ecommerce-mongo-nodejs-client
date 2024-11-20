@@ -4,9 +4,8 @@ import { useJwt } from 'react-jwt'
 import { useModal } from '../../../hooks/useModal'
 import { getAllUsers, changeUserRole, deleteUser } from '../../../services'
 import { Modal } from '../../../components'
-import { Box, Button, CircularProgress, Container, IconButton, Typography, useTheme } from '@mui/material'
+import { Alert, AlertTitle, Box, Button, CircularProgress, Container, IconButton, Snackbar, Typography, useTheme } from '@mui/material'
 import { VerifiedUser, Delete, Home } from '@mui/icons-material';
-import CheckIcon from "../../../assets/CheckIcon.svg"
 import WarningIcon from "../../../assets/WarnignIcon.png"
 import { Link } from 'react-router-dom'
 
@@ -14,6 +13,7 @@ export const UsersPage = () => {
 
     const token = localStorage.getItem('token')
     const theme = useTheme()
+    const time: number = 3000
     const { decodedToken } = useJwt<IUser>(token!)
     const {
         toggleModal,
@@ -29,6 +29,10 @@ export const UsersPage = () => {
     const [usersList, setUsersList] = useState<IUsers[]>([])
     const [actionType, setActionType] = useState<string>("")
     const [loader, setLoader] = useState<boolean>(true)
+    const [openSnackbar, setOpenSnackbar] = useState<boolean>(false)
+    const [snackbarTitle, setSnackbarTitle] = useState<string>('')
+    const [snackbarSubtitle, setSnackbarSubtitle] = useState<string>('')
+    const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'info'>('info')
     const [userToDeleteId, setUserToDeleteId] = useState<string>('')
     const [userToChangeRole, setUserToChangeRole] = useState<IUsers>({
         email: '',
@@ -65,31 +69,68 @@ export const UsersPage = () => {
     }
 
     const actionButtonHandler = async () => {
-        if (actionType === 'changeRole' && userToChangeRole.isAdmin) {
-            openModal('loading', 'Cargando...')
-            await changeUserRole(token!, userToChangeRole._id, false)
-            openModal('info', "Se cambio el Rol a Usuario", CheckIcon, 'aceptar', 'success')
-            getAllUsersHandler()
 
-            return
+        if (actionType === 'changeRole' && userToChangeRole.isAdmin) {
+            try {
+                openModal('loading', 'Cargando...')
+                await changeUserRole(token!, userToChangeRole._id, false)
+                setOpenSnackbar(true)
+                setSnackbarTitle('Se cambio el Rol a usuario')
+                setSnackbarSeverity('success')
+                closeModal()
+                getAllUsersHandler()
+
+                return
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (error) {
+                setOpenSnackbar(true)
+                setSnackbarTitle('Hubo un error')
+                setSnackbarSubtitle('intente de nuevo')
+                setSnackbarSeverity('error')
+                closeModal()
+            }
         }
 
         if (actionType === 'changeRole' && !userToChangeRole.isAdmin) {
-            openModal('loading', 'Cargando...')
-            await changeUserRole(token!, userToChangeRole._id, true)
-            openModal('info', "Se cambio el Rol a Admin", CheckIcon, 'aceptar', 'success')
-            getAllUsersHandler()
+            try {
+                openModal('loading', 'Cargando...')
+                await changeUserRole(token!, userToChangeRole._id, true)
+                setOpenSnackbar(true)
+                setSnackbarTitle('Se cambio el Rol a admin')
+                setSnackbarSeverity('success')
+                closeModal()
+                getAllUsersHandler()
 
-            return
+                return
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (error) {
+                setOpenSnackbar(true)
+                setSnackbarTitle('Hubo un error')
+                setSnackbarSubtitle('intente de nuevo')
+                setSnackbarSeverity('error')
+                closeModal()
+            }
         }
 
         if (actionType === 'deleteUser') {
-            openModal('loading', 'Eliminando usuario...')
-            await deleteUser(token!, userToDeleteId)
-            openModal('info', 'Se elimino el Usuario', CheckIcon, 'aceptar', 'success')
-            getAllUsersHandler()
-        }
+            try {
+                openModal('loading', 'Eliminando usuario...')
+                await deleteUser(token!, userToDeleteId)
+                setOpenSnackbar(true)
+                setSnackbarTitle('Se elimino el usuario')
+                setSnackbarSeverity('success')
+                closeModal()
+                getAllUsersHandler()
 
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (error) {
+                setOpenSnackbar(true)
+                setSnackbarTitle('Hubo un error')
+                setSnackbarSubtitle('intente de nuevo')
+                setSnackbarSeverity('error')
+                closeModal()
+            }
+        }
     }
 
     const getAllUsersHandler = async () => {
@@ -102,10 +143,10 @@ export const UsersPage = () => {
 
             setUsersList(hideCurrentUser);
             setLoader(false)
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
             setUsersList([]);
             setLoader(false)
-            console.log("Error al obtener usuarios:", err);
         }
     };
 
@@ -231,6 +272,20 @@ export const UsersPage = () => {
                     </Box>
                 </>)
             }
+
+            {openSnackbar && (
+                <Snackbar
+                    open={true}
+                    autoHideDuration={time}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    onClose={() => setOpenSnackbar(false)}
+                >
+                    <Alert severity={snackbarSeverity} variant='filled'>
+                        <AlertTitle>{snackbarTitle}</AlertTitle>
+                        <Typography variant='body2'>{snackbarSubtitle}</Typography>
+                    </Alert>
+                </Snackbar>
+            )}
 
             {toggleModal && (
                 <Modal

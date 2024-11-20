@@ -1,7 +1,7 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react"
 import { useModal } from "../../hooks/useModal"
 import { useParams, Link } from "react-router-dom"
-import { Autocomplete, Box, Button, Container, Grid, Input, TextField, Typography } from "@mui/material"
+import { Alert, AlertTitle, Autocomplete, Box, Button, Container, Grid, Input, Snackbar, TextField, Typography } from "@mui/material"
 import { Cancel } from "@mui/icons-material"
 import { getProductDetail, deleteProductImage, editProduct } from "../../services"
 import { Modal } from "../../components"
@@ -21,6 +21,7 @@ export const EditProductsPage = () => {
 
     //Hooks and Consts.
     const token = localStorage.getItem('token')
+    const time: number = 3000
     const { id } = useParams()
     const { toggleModal, modalType, title, icon, buttonValue, buttonColor, openModal, closeModal } = useModal()
 
@@ -36,6 +37,10 @@ export const EditProductsPage = () => {
     })
     const [productImages, setProductImages] = useState<string[]>([])
     const [selectedImage, setSelectedImage] = useState<string>('')
+    const [openSnackbar, setOpenSnackbar] = useState<boolean>(false)
+    const [snackbarTitle, setSnackbarTitle] = useState<string>('')
+    const [snackbarSubtitle, setSnackbarSubtitle] = useState<string>('')
+    const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'info'>('info')
 
     //Handlers
     const setInputValuesHandler = (e: ChangeEvent<HTMLInputElement>) => {
@@ -72,16 +77,23 @@ export const EditProductsPage = () => {
         const productName = decodeURIComponent(pathSegments[2]);
 
         try {
-
             const removedImageFromArray = productImages.filter(image => {
                 return image !== imageUrl
             })
 
             setProductImages(removedImageFromArray)
             await deleteProductImage(token!, id!, folder, productName)
+            setOpenSnackbar(true)
+            setSnackbarTitle('se elimino la imagen')
+            setSnackbarSeverity('success')
             closeModal()
+            
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            console.log(error)
+            setOpenSnackbar(true)
+            setSnackbarTitle('error al eliminar la imagen')
+            setSnackbarSubtitle('intente de nuevo')
+            setSnackbarSeverity('error')
         }
     }
 
@@ -91,9 +103,19 @@ export const EditProductsPage = () => {
 
         try {
             await editProduct(token!, id!, inputValues)
+            setOpenSnackbar(true)
+            setSnackbarTitle(`edistaste: ${inputValues.title}`)
+            setSnackbarSeverity('success')
             closeModal()
+            await getProductDetailHandler()
+            
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
-            console.log(err)
+            setOpenSnackbar(true)
+            setSnackbarTitle('No se pudo editar el producto')
+            setSnackbarSubtitle('intente nuevamente')
+            setSnackbarSeverity('error')
+            closeModal()
         }
     }
 
@@ -268,6 +290,20 @@ export const EditProductsPage = () => {
                     </Grid>
                 </form>
             </Grid>
+
+            {openSnackbar && (
+                <Snackbar
+                    open={true}
+                    autoHideDuration={time}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    onClose={() => setOpenSnackbar(false)}
+                >
+                    <Alert severity={snackbarSeverity} variant='filled'>
+                        <AlertTitle>{snackbarTitle}</AlertTitle>
+                        <Typography variant='body2'>{snackbarSubtitle}</Typography>
+                    </Alert>
+                </Snackbar>
+            )}
 
             {toggleModal && (
                 <Modal
