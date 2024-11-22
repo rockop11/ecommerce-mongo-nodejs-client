@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react"
+import { ChangeEvent, FormEvent, useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { Box, Button, Grid, InputAdornment, TextField, Typography } from "@mui/material"
 import { Login, VisibilityOff, Visibility } from "@mui/icons-material"
@@ -33,7 +33,8 @@ export const LoginPage = () => {
         setInputIcon(!inputIcon)
     }
 
-    const loginHandler = async () => {
+    const loginHandler = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
         const { username, password } = inputValues
 
         if (!inputValues.username || !inputValues.password) {
@@ -86,36 +87,36 @@ export const LoginPage = () => {
                     Por favor, ingrese sus credenciales
                 </Typography>
 
-                <Box
-                    sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
-                >
-                    <TextField
-                        size="small"
-                        label="Usuario"
-                        type="text"
-                        variant="outlined"
-                        fullWidth
-                        name='username'
-                        onChange={inputValuesHandler}
-                        value={inputValues.username}
-                        error={errorMessage && !inputValues.username ? true : false}
-                    />
+                <form onSubmit={loginHandler}>
+                    <Box
+                        sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
+                    >
+                        <TextField
+                            size="small"
+                            label="Usuario"
+                            type="text"
+                            variant="outlined"
+                            fullWidth
+                            name='username'
+                            onChange={inputValuesHandler}
+                            value={inputValues.username}
+                            error={errorMessage && !inputValues.username ? true : false}
+                        />
 
-                    <TextField
-                        size="small"
-                        label="Contraseña"
-                        type={inputIcon ? 'text' : 'password'}
-                        variant="outlined"
-                        fullWidth
-                        name='password'
-                        onChange={inputValuesHandler}
-                        value={inputValues.password}
-                        error={errorMessage && !inputValues.password ? true : false}
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    {
-                                        inputIcon
+                        <TextField
+                            size="small"
+                            label="Contraseña"
+                            type={inputIcon ? 'text' : 'password'}
+                            variant="outlined"
+                            fullWidth
+                            name='password'
+                            onChange={inputValuesHandler}
+                            value={inputValues.password}
+                            error={errorMessage && !inputValues.password ? true : false}
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        {inputIcon
                                             ? (<Visibility
                                                 sx={{ cursor: 'pointer' }}
                                                 onClick={inputIconHandler}
@@ -123,33 +124,30 @@ export const LoginPage = () => {
                                             : (<VisibilityOff
                                                 sx={{ cursor: 'pointer' }}
                                                 onClick={inputIconHandler}
-                                            />)
-                                    }
+                                            />)}
+                                    </InputAdornment>
+                                )
+                            }}
+                        />
 
-                                </InputAdornment>
-                            )
-                        }}
-                    />
+                        {errorMessage && (<Typography align="center" color={'red'}>{errorMessage}</Typography>)}
 
-
-                    {errorMessage && (<Typography align="center" color={'red'}>{errorMessage}</Typography>)}
-
-
-                    <Button
-                        onClick={loginHandler}
-                        variant="contained"
-                        fullWidth
-                        size="large"
-                        startIcon={<Login />}
-                        sx={{
-                            backgroundColor: '#1976d2',
-                            '&:hover': { backgroundColor: '#1565c0' },
-                            padding: '12px'
-                        }}
-                    >
-                        Ingresar
-                    </Button>
-                </Box>
+                        <Button
+                            variant="contained"
+                            fullWidth
+                            size="large"
+                            type='submit'
+                            startIcon={<Login />}
+                            sx={{
+                                backgroundColor: '#1976d2',
+                                '&:hover': { backgroundColor: '#1565c0' },
+                                padding: '12px'
+                            }}
+                        >
+                            Ingresar
+                        </Button>
+                    </Box>
+                </form>
                 <Typography align="center" variant="body1" marginTop={2}><Link to='/changePassword'>Perdiste tu contraseña?</Link></Typography>
                 <Typography align="center" variant="body1" marginTop={2}>No tienes cuenta? <Link to='/register'>Registrate</Link></Typography>
             </Grid>
