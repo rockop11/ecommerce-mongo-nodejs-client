@@ -22,7 +22,8 @@ export const ProductDetailPage = () => {
 		title: '',
 		description: '',
 		_id: '',
-		createdBy: ''
+		createdBy: '',
+		updatedAt: new Date()
 	})
 
 	const formatPrice = (price: number): string => {
@@ -78,7 +79,7 @@ export const ProductDetailPage = () => {
 					<Link
 						to="/products"
 						style={{
-							color: '#1976d2', // Azul más sobrio
+							color: '#1976d2',
 							fontWeight: 'bold',
 							textDecoration: 'none',
 							marginBottom: 2,
@@ -101,7 +102,10 @@ export const ProductDetailPage = () => {
 
 						{/* Detalles del producto */}
 						<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-							<Typography variant="h5" fontWeight="bold" color="text.primary" sx={{ fontSize: '1.5rem' }}>
+							<Typography variant="h5" fontWeight="bold" color="text.primary" sx={{
+								textDecoration: productDetail.discount > 0 ? 'line-through' : '',
+								fontSize: '1.5rem'
+							}}>
 								{formatPrice(productDetail.price)}
 							</Typography>
 							<Typography variant="body1" color="#9e9e9e" fontWeight="medium" sx={{ fontSize: '1rem' }}>
@@ -119,6 +123,14 @@ export const ProductDetailPage = () => {
 							<Typography variant="body2" color="text.secondary">
 								Creado Por: {productDetail.createdBy}
 							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								fecha de Creacion: {new Date(productDetail.date).toLocaleDateString()}
+							</Typography>
+							{productDetail.updatedAt && (
+								<Typography variant="body2" color="text.secondary">
+									Ultima Edicion: {new Date(productDetail.updatedAt).toLocaleDateString()}
+								</Typography>
+							)}
 						</Box>
 					</Box>
 
