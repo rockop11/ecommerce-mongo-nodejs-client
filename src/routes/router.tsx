@@ -7,6 +7,8 @@ import {
     ProductDetailPage,
     ProfilePage,
     RegisterPage,
+    RecoveryEmailPage,
+    RecoveryPasswordPage,
     EditUserPage,
     UsersPage,
     EditProductsPage
@@ -63,5 +65,13 @@ export const router = createBrowserRouter([
     {
         path: '/changePassword',
         element: <>ChangePasswordPage</>
+    },
+    {
+        path: '/recoveryPassword',
+        element: <RecoveryEmailPage />
+    },
+    {
+        path: '/recoveryPassword/:token',
+        element: <RecoveryPasswordPage />
     }
 ])

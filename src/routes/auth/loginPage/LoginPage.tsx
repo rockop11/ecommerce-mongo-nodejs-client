@@ -148,7 +148,7 @@ export const LoginPage = () => {
                         </Button>
                     </Box>
                 </form>
-                <Typography align="center" variant="body1" marginTop={2}><Link to='/changePassword'>Perdiste tu contraseña?</Link></Typography>
+                <Typography align="center" variant="body1" marginTop={2}><Link to='/recoveryPassword'>Recuperar contraseña</Link></Typography>
                 <Typography align="center" variant="body1" marginTop={2}>No tienes cuenta? <Link to='/register'>Registrate</Link></Typography>
             </Grid>
         </Grid>

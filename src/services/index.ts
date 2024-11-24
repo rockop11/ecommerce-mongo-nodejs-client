@@ -6,6 +6,8 @@ export { getAllUsers } from './auth/getAllUsers'
 export { getLastUserCreated } from './auth/getLastUserCreated'
 export { login } from "./auth/login"
 export { logout } from "./auth/logout"
+export { recoveryPassword } from "./auth/recoveryPassword"
+export { recoveryPassEmail } from "./auth/recoveryPassEmail"
 export { register } from "./auth/register"
 
 //Products
