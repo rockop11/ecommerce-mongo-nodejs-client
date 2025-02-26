@@ -1,4 +1,5 @@
 // Auth
+export { changePassword } from './auth/changePassword';
 export { changeUserRole } from "./auth/changeUserRole"
 export { deleteUser } from "./auth/deleteUser"
 export { editUser } from './auth/editUser'

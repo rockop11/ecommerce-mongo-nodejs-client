@@ -11,7 +11,8 @@ import {
     RecoveryPasswordPage,
     EditUserPage,
     UsersPage,
-    EditProductsPage
+    EditProductsPage,
+    ChangePassword
 } from "./index"
 import { Layout } from "./Layout";
 
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
                 element: <ProfilePage />
             },
             {
+                path: '/changePassword',
+                element: <ChangePassword />
+            },
+            {
                 path: '/editUser',
                 element: <EditUserPage />
             },
@@ -61,10 +66,6 @@ export const router = createBrowserRouter([
     {
         path: '/register',
         element: <RegisterPage />
-    },
-    {
-        path: '/changePassword',
-        element: <>ChangePasswordPage</>
     },
     {
         path: '/recoveryPassword',
