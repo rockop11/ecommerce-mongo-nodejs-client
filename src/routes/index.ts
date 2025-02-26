@@ -1,4 +1,5 @@
 //Auth Routes
+export { ChangePassword } from './auth/changePassword/ChangePassword'
 export { EditUserPage } from "./auth/editUser/EditUserPage"
 export { IndexPage } from "./indexPage/IndexPage"
 export { LoginPage } from "./auth/loginPage/LoginPage"
